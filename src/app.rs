@@ -67,22 +67,3 @@ impl App {
         }
     }
 }
-
-/* impl Widget for &App {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        let mut list_items = Vec::<ListItem>::new();
-        for prompt in &self.available_prompts {
-            list_items.push(ListItem::new(Line::from(Span::styled(
-                format!("{}", prompt.name),
-                Style::default().fg(Color::Blue),
-            ))));
-        }
-
-        let title = Line::from(" Redox - A journaling app ".bold());
-        let block = Block::bordered()
-            .title(title.centered())
-            .border_set(border::THICK);
-
-        List::new(list_items).block(block).render(area, buf);
-    }
-} */

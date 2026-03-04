@@ -41,7 +41,6 @@ fn main() -> io::Result<()> {
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
     loop {
-        terminal.draw(|frame| ui(frame, app)).unwrap();
         match app.mode {
             AppMode::Selection => {
                 if let Event::Key(key) = event::read()? {
@@ -63,5 +62,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             }
             _ => {}
         }
+        terminal.draw(|frame| ui(frame, app)).unwrap();
+
     }
 }
