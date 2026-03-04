@@ -37,15 +37,15 @@ pub fn load_config() -> Settings {
 
 #[derive(Deserialize, Debug)]
 pub struct JournalPrompt {
-    name: String,
-    prompt: String,
-    user_input: Option<String>,
+    pub name: String,
+    pub prompt: String,
+    pub user_input: Option<String>,
 }
 
 #[derive(PartialEq)]
 pub enum AppMode {
     Selection,
-    Entry,
+    JournalEntry,
     WrapUp,
     Exit,
 }

@@ -29,6 +29,18 @@ pub fn ui(frame: &mut Frame, app: &App) {
     .block(title_block);
 
     frame.render_widget(title, chunks[0]);
+
+    let mut list_items = Vec::<ListItem>::new();
+    for prompt in &app.available_prompts {
+        list_items.push(ListItem::new(Line::from(Span::styled(
+            format!("{}", prompt.name),
+            Style::default().fg(Color::Blue),
+        ))));
+    }
+
+    let list = List::new(list_items);
+
+    frame.render_widget(list, chunks[1]);
 }
 
 /* impl Widget for &App {
