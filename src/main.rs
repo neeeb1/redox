@@ -3,8 +3,7 @@ mod ui;
 
 use crossterm::event::{Event, KeyCode};
 use crossterm::terminal::{LeaveAlternateScreen, disable_raw_mode};
-use crossterm::{event, terminal};
-use ratatui::backend;
+use crossterm::event;
 use ratatui::crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use ratatui::crossterm::execute;
 use ratatui::crossterm::terminal::{EnterAlternateScreen, enable_raw_mode};
@@ -13,6 +12,7 @@ use ratatui::{Terminal, prelude::Backend};
 
 use crate::app::*;
 use crate::ui::*;
+use core::panic;
 use std::io;
 
 fn main() -> io::Result<()> {
@@ -26,7 +26,7 @@ fn main() -> io::Result<()> {
     let settings = load_config();
     let mut app = App::new(settings);
 
-    let res = run_app(&mut terminal, &mut app);
+    let result = run_app(&mut terminal, &mut app);
 
     disable_raw_mode()?;
     execute!(
@@ -36,13 +36,19 @@ fn main() -> io::Result<()> {
     )?;
     terminal.show_cursor()?;
 
-    Ok(())
+    match result {
+        Err(err) => panic!("{:?}", err),
+        Ok(_) => Ok(())
+    }
+
 }
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
     loop {
         match app.mode {
             AppMode::Selection => {
+                terminal.draw(|frame| ui(frame, app)).unwrap();
+
                 if let Event::Key(key) = event::read()? {
                     if key.kind == event::KeyEventKind::Release {
                         // Skip events that are not KeyEventKind::Press
@@ -62,7 +68,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             }
             _ => {}
         }
-        terminal.draw(|frame| ui(frame, app)).unwrap();
 
     }
 }
