@@ -89,10 +89,12 @@ impl App {
     }
 
     pub fn toggle_selected(&mut self) {
-        if self.available_prompts[self.list_state.selected().unwrap()].status == PromptStatus::Selected {
-            self.available_prompts[self.list_state.selected().unwrap()].status = PromptStatus::Unselected;
-        } else if self.available_prompts[self.list_state.selected().unwrap()].status == PromptStatus::Unselected {
-            self.available_prompts[self.list_state.selected().unwrap()].status = PromptStatus::Selected;
+        if let Some(i) = self.list_state.selected() {
+            let status = &mut self.available_prompts[i].status;
+            *status = match status {
+                PromptStatus::Selected => PromptStatus::Unselected,
+                PromptStatus::Unselected => PromptStatus::Selected,
+            };
         }
     }
 }
