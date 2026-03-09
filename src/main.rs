@@ -1,9 +1,9 @@
 mod app;
 mod ui;
 
+use crossterm::event;
 use crossterm::event::{Event, KeyCode};
 use crossterm::terminal::{LeaveAlternateScreen, disable_raw_mode};
-use crossterm::event;
 use ratatui::crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use ratatui::crossterm::execute;
 use ratatui::crossterm::terminal::{EnterAlternateScreen, enable_raw_mode};
@@ -38,9 +38,8 @@ fn main() -> io::Result<()> {
 
     match result {
         Err(err) => panic!("{:?}", err),
-        Ok(_) => Ok(())
+        Ok(_) => Ok(()),
     }
-
 }
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
@@ -58,6 +57,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             KeyCode::Char('q') => {
                                 app.mode = AppMode::Exit;
                             }
+                            KeyCode::Down => {
+                                app.select_next();
+                            }
+                            KeyCode::Up => {
+                                app.select_previous();
+                            }
                             _ => {}
                         }
                     }
@@ -68,6 +73,5 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             }
             _ => {}
         }
-
     }
 }

@@ -1,17 +1,7 @@
 use config::Config;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
-use ratatui::{
-    DefaultTerminal, Frame,
-    buffer::Buffer,
-    layout::Rect,
-    style::{Color, Style, Stylize},
-    symbols::border,
-    text::{Line, Span, Text},
-    widgets::{Block, List, ListItem, Paragraph, Widget},
-};
+use ratatui::widgets::ListState;
 use serde::Deserialize;
 use std::fs::File;
-use std::io;
 use std::path::Path;
 
 #[derive(Deserialize, Debug)]
@@ -35,11 +25,22 @@ pub fn load_config() -> Settings {
         .unwrap()
 }
 
+#[derive(PartialEq, Deserialize, Debug)]
+pub enum PromptStatus {
+    Selected,
+    Unselected,
+}
+
 #[derive(Deserialize, Debug)]
 pub struct JournalPrompt {
     pub name: String,
     pub prompt: String,
     pub user_input: Option<String>,
+}
+
+pub struct SelectionItem {
+    pub prompt: JournalPrompt,
+    pub status: PromptStatus,
 }
 
 #[derive(PartialEq)]
@@ -52,18 +53,37 @@ pub enum AppMode {
 
 pub struct App {
     pub mode: AppMode,
-    pub available_prompts: Vec<JournalPrompt>,
+    pub available_prompts: Vec<SelectionItem>,
     pub selected_prompts: Vec<JournalPrompt>,
     pub current_prompt: Option<JournalPrompt>,
+    pub list_state: ListState,
 }
 
 impl App {
     pub fn new(settings: Settings) -> App {
+        let mut selection_prompts: Vec<SelectionItem> = Vec::new();
+        for prompt in settings.prompts {
+            let item = SelectionItem {
+                prompt: prompt,
+                status: PromptStatus::Unselected,
+            };
+            selection_prompts.push(item);
+        }
+
         App {
             mode: AppMode::Selection,
-            available_prompts: settings.prompts,
+            available_prompts: selection_prompts,
             selected_prompts: Vec::<JournalPrompt>::new(),
             current_prompt: None,
+            list_state: ListState::default().with_selected(Some(0)),
         }
+    }
+
+    pub fn select_next(&mut self) {
+        self.list_state.select_next();
+    }
+
+    pub fn select_previous(&mut self) {
+        self.list_state.select_previous();
     }
 }

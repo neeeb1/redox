@@ -1,14 +1,17 @@
-use crate::app::{App, AppMode};
+use crate::app::*;
 use ratatui::{
     Frame,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style, Stylize},
-    symbols::border,
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Widget},
+    widgets::{Block, Borders, HighlightSpacing, List, ListItem, Paragraph},
 };
 
-pub fn ui(frame: &mut Frame, app: &App) {
+const SELECTED_STYLE: Style = Style::new()
+    .bg(Color::DarkGray)
+    .add_modifier(Modifier::BOLD);
+
+pub fn ui(frame: &mut Frame, app: &mut App) {
     // Split screen into 3 sections
     // Top has length of 3, middle has a minimum length of 1, and bottom has length of 3
     let chunks = Layout::default()
@@ -35,9 +38,16 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
     // Configure the middle widget (list of available prompts)
     let mut list_items = Vec::<ListItem>::new();
-    for prompt in &app.available_prompts {
+    for item in &app.available_prompts {
+        let selected: String;
+        if item.status == PromptStatus::Unselected {
+            selected = "[ ]".to_string();
+        } else {
+            selected = "[X]".to_string()
+        }
+
         list_items.push(ListItem::new(Line::from(Span::styled(
-            format!("{}", prompt.name),
+            format!("{} {}", item.prompt.name, selected),
             Style::default().fg(Color::Blue),
         ))));
     }
@@ -46,9 +56,13 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .borders(Borders::ALL)
         .style(Style::default());
 
-    let list = List::new(list_items).block(list_block);
+    let list = List::new(list_items)
+        .block(list_block)
+        .highlight_symbol(">> ")
+        .highlight_style(SELECTED_STYLE)
+        .highlight_spacing(HighlightSpacing::Always);
 
-    frame.render_widget(list, chunks[1]);
+    frame.render_stateful_widget(list, chunks[1], &mut app.list_state);
 
     // Configure the bottom widget (navigation/help hints)
     let current_nav_text = vec![
