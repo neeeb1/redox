@@ -63,6 +63,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             KeyCode::Up => {
                                 app.select_previous();
                             }
+                            KeyCode::Enter => {
+                                app.toggle_selected();
+                            }
                             _ => {}
                         }
                     }

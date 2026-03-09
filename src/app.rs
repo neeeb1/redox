@@ -25,19 +25,20 @@ pub fn load_config() -> Settings {
         .unwrap()
 }
 
-#[derive(PartialEq, Deserialize, Debug)]
+#[derive(PartialEq, Deserialize, Debug, Clone)]
 pub enum PromptStatus {
     Selected,
     Unselected,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct JournalPrompt {
     pub name: String,
     pub prompt: String,
     pub user_input: Option<String>,
 }
 
+#[derive(Clone)]
 pub struct SelectionItem {
     pub prompt: JournalPrompt,
     pub status: PromptStatus,
@@ -85,5 +86,13 @@ impl App {
 
     pub fn select_previous(&mut self) {
         self.list_state.select_previous();
+    }
+
+    pub fn toggle_selected(&mut self) {
+        if self.available_prompts[self.list_state.selected().unwrap()].status == PromptStatus::Selected {
+            self.available_prompts[self.list_state.selected().unwrap()].status = PromptStatus::Unselected;
+        } else if self.available_prompts[self.list_state.selected().unwrap()].status == PromptStatus::Unselected {
+            self.available_prompts[self.list_state.selected().unwrap()].status = PromptStatus::Selected;
+        }
     }
 }

@@ -41,13 +41,13 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
     for item in &app.available_prompts {
         let selected: String;
         if item.status == PromptStatus::Unselected {
-            selected = "[ ]".to_string();
+            selected = "[ ] ".to_string();
         } else {
-            selected = "[X]".to_string()
+            selected = "[X] ".to_string()
         }
 
         list_items.push(ListItem::new(Line::from(Span::styled(
-            format!("{} {}", item.prompt.name, selected),
+            format!("{} {}", selected, item.prompt.name),
             Style::default().fg(Color::Blue),
         ))));
     }
@@ -79,11 +79,11 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
     let current_keys_hint = {
         match app.mode {
             AppMode::Selection => Span::styled(
-                "(q) to quit | (up / down) to naviate prompts | (enter) to select a prompt",
+                "(q) to quit | (up / down) to navigate | (enter) to select",
                 Style::default().fg(Color::Yellow),
             ),
             _ => Span::styled(
-                "(q) to quit | (up / down) to naviate prompts | (enter) to select a prompt",
+                "(q) to quit | (up / down) to navigate | (enter) to select",
                 Style::default().fg(Color::Yellow),
             ),
         }
