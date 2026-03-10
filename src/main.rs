@@ -9,6 +9,7 @@ use ratatui::crossterm::execute;
 use ratatui::crossterm::terminal::{EnterAlternateScreen, enable_raw_mode};
 use ratatui::prelude::CrosstermBackend;
 use ratatui::{Terminal, prelude::Backend};
+use ratatui_textarea::TextArea;
 
 use crate::app::*;
 use crate::ui::*;
@@ -64,7 +65,37 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                 app.select_previous();
                             }
                             KeyCode::Enter => {
-                                app.toggle_selected();
+                                if app.list_state.selected().unwrap() == app.available_prompts.len()
+                                {
+                                    for prompt in &app.available_prompts {
+                                        if prompt.status == PromptStatus::Selected {
+                                            app.selected_prompts.push(prompt.prompt.clone());
+                                        }
+                                    }
+                                    if app.selected_prompts.len() > 0 {
+                                        app.current_prompt = Some(app.selected_prompts[0].clone());
+                                        app.mode = AppMode::Entry;
+                                    }
+                                } else {
+                                    app.toggle_selected();
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
+            AppMode::Entry => {
+                terminal.draw(|frame| ui(frame, app)).unwrap();
+
+                if let Event::Key(key) = event::read()? {
+                    if key.kind == event::KeyEventKind::Release {
+                        // Skip events that are not KeyEventKind::Press
+                        continue;
+                    } else {
+                        match key.code {
+                            KeyCode::Esc => {
+                                app.mode = AppMode::Exit;
                             }
                             _ => {}
                         }

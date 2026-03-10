@@ -47,7 +47,7 @@ pub struct SelectionItem {
 #[derive(PartialEq)]
 pub enum AppMode {
     Selection,
-    JournalEntry,
+    Entry,
     WrapUp,
     Exit,
 }

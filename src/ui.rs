@@ -1,11 +1,12 @@
 use crate::app::*;
 use ratatui::{
     Frame,
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Direction, Layout, VerticalAlignment},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, Borders, HighlightSpacing, List, ListItem, Paragraph},
 };
+use ratatui_textarea::TextArea;
 
 const SELECTED_STYLE: Style = Style::new()
     .bg(Color::DarkGray)
@@ -36,33 +37,63 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
 
     frame.render_widget(title, chunks[0]);
 
-    // Configure the middle widget (list of available prompts)
-    let mut list_items = Vec::<ListItem>::new();
-    for item in &app.available_prompts {
-        let selected: String;
-        if item.status == PromptStatus::Unselected {
-            selected = "[ ] ".to_string();
-        } else {
-            selected = "[X] ".to_string()
+    match app.mode {
+        AppMode::Selection => {
+            // Configure the middle widget (list of available prompts)
+            let mut list_items = Vec::<ListItem>::new();
+            for item in &app.available_prompts {
+                let selected: String;
+                if item.status == PromptStatus::Unselected {
+                    selected = "[ ] ".to_string();
+                } else {
+                    selected = "[X] ".to_string()
+                }
+
+                list_items.push(ListItem::new(Line::from(Span::styled(
+                    format!("{} {}", selected, item.prompt.name),
+                    Style::default().fg(Color::Blue),
+                ))));
+            }
+
+            list_items.push(ListItem::new("Continue"));
+
+            let list_block = Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default());
+
+            let list = List::new(list_items)
+                .block(list_block)
+                .highlight_symbol(">> ")
+                .highlight_style(SELECTED_STYLE)
+                .highlight_spacing(HighlightSpacing::Always);
+
+            frame.render_stateful_widget(list, chunks[1], &mut app.list_state);
         }
+        AppMode::Entry => {
+            let current_prompt = app.current_prompt.clone().unwrap();
 
-        list_items.push(ListItem::new(Line::from(Span::styled(
-            format!("{} {}", selected, item.prompt.name),
-            Style::default().fg(Color::Blue),
-        ))));
+            let entry_chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Percentage(15),
+                    Constraint::Percentage(15),
+                    Constraint::Percentage(70),
+                ])
+                .split(chunks[1]);
+
+            let prompt_title = Span::styled(current_prompt.name, Style::default().fg(Color::Blue));
+
+            let prompt_text =
+                Span::styled(current_prompt.prompt, Style::default().fg(Color::LightBlue));
+
+            let mut user_input = TextArea::default();
+
+            frame.render_widget(prompt_title, entry_chunks[0]);
+            frame.render_widget(prompt_text, entry_chunks[1]);
+            frame.render_widget(&user_input, entry_chunks[2]);
+        }
+        _ => {}
     }
-
-    let list_block = Block::default()
-        .borders(Borders::ALL)
-        .style(Style::default());
-
-    let list = List::new(list_items)
-        .block(list_block)
-        .highlight_symbol(">> ")
-        .highlight_style(SELECTED_STYLE)
-        .highlight_spacing(HighlightSpacing::Always);
-
-    frame.render_stateful_widget(list, chunks[1], &mut app.list_state);
 
     // Configure the bottom widget (navigation/help hints)
     let current_nav_text = vec![
@@ -80,6 +111,10 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
         match app.mode {
             AppMode::Selection => Span::styled(
                 "(q) to quit | (up / down) to navigate | (enter) to select",
+                Style::default().fg(Color::Yellow),
+            ),
+            AppMode::Entry => Span::styled(
+                "Type to enter your entry | (ctrl+enter) to continue | (esc) to exit",
                 Style::default().fg(Color::Yellow),
             ),
             _ => Span::styled(
