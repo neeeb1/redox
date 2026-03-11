@@ -1,10 +1,11 @@
 use config::Config;
 use ratatui::widgets::ListState;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::fs::File;
 use std::path::Path;
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Settings {
     prompts: Vec<JournalPrompt>,
 }
@@ -16,7 +17,26 @@ pub fn load_config() -> Settings {
 
     if !(Path::new(config_path.to_str().unwrap()).exists()) {
         File::create_new(&config_path).unwrap();
+
+        let mut default_settings = Settings {
+            prompts: Vec::<JournalPrompt>::new(),
+        };
+        default_settings.prompts.push(JournalPrompt { name: ("Today's Thoughts".to_string()), prompt: ("What are you thinking about today? Any recurring thoughts that you can't get out of your head?".to_string()) });
+        default_settings.prompts.push(JournalPrompt {
+            name: ("Graditude is Rad-itude".to_string()),
+            prompt: ("What are you thankful for today? Try to name 2 or 3 things.".to_string()),
+        });
+        default_settings.prompts.push(JournalPrompt {
+            name: ("My Media Diet".to_string()),
+            prompt: ("What are you consuming lately? Games, movies, music, books... anything!"
+                .to_string()),
+        });
+        default_settings.prompts.push(JournalPrompt { name: ("Today's Top Tasks".to_string()), prompt: ("Name 3 tasks that are essential for today.\nIf you did these, you've done the bare minimum for a successful day!".to_string()) });
+
+        let config_json = serde_json::to_string(&default_settings).unwrap();
+        std::fs::write(&config_path, config_json).unwrap();
     }
+
     Config::builder()
         .add_source(config::File::with_name(config_path.to_str().unwrap()))
         .build()
@@ -31,11 +51,10 @@ pub enum PromptStatus {
     Unselected,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JournalPrompt {
     pub name: String,
     pub prompt: String,
-    pub user_input: Option<String>,
 }
 
 #[derive(Clone)]
