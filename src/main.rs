@@ -8,8 +8,9 @@ use ratatui::crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use ratatui::crossterm::execute;
 use ratatui::crossterm::terminal::{EnterAlternateScreen, enable_raw_mode};
 use ratatui::prelude::CrosstermBackend;
+use ratatui::widgets::{Block, Borders};
 use ratatui::{Terminal, prelude::Backend};
-use ratatui_textarea::TextArea;
+use ratatui_textarea::{Input, Key, TextArea};
 
 use crate::app::*;
 use crate::ui::*;
@@ -18,10 +19,10 @@ use std::io;
 
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
-    let mut stderr = io::stderr();
-    execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
 
-    let backend = CrosstermBackend::new(io::stdout());
+    let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
     let settings = load_config();
@@ -45,9 +46,10 @@ fn main() -> io::Result<()> {
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
     loop {
+        terminal.draw(|frame| ui(frame, app)).unwrap();
+
         match app.mode {
             AppMode::Selection => {
-                terminal.draw(|frame| ui(frame, app)).unwrap();
 
                 if let Event::Key(key) = event::read()? {
                     if key.kind == event::KeyEventKind::Release {
@@ -74,6 +76,13 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                     }
                                     if app.selected_prompts.len() > 0 {
                                         app.current_prompt = Some(app.selected_prompts[0].clone());
+                                        let mut text_area = TextArea::default();
+                                        text_area.set_block(
+                                            Block::default()
+                                                .borders(Borders::ALL)
+                                                .title("Type to enter entry"),
+                                        );
+                                        app.user_input = Some(text_area);
                                         app.mode = AppMode::Entry;
                                     }
                                 } else {
@@ -86,22 +95,33 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 }
             }
             AppMode::Entry => {
-                terminal.draw(|frame| ui(frame, app)).unwrap();
-
-                if let Event::Key(key) = event::read()? {
-                    if key.kind == event::KeyEventKind::Release {
-                        // Skip events that are not KeyEventKind::Press
-                        continue;
-                    } else {
-                        match key.code {
-                            KeyCode::Esc => {
-                                app.mode = AppMode::Exit;
-                            }
-                            _ => {}
+                match crossterm::event::read()?.into() {
+                    Input { key: Key::Esc, .. } => app.mode = AppMode::Exit,
+                    Input {
+                        key: Key::Enter, ..
+                    } => {
+                        let prompt = app.current_prompt.clone().unwrap();
+                        app.submit_prompt(&prompt);
+                        if app.entries.len() == app.selected_prompts.len() {
+                            app.mode = AppMode::WrapUp;
+                        } else {
+                            let index = app
+                                .selected_prompts
+                                .iter()
+                                .position(|p| p == app.current_prompt.as_ref().unwrap());
+                            app.current_prompt =
+                                Some(app.selected_prompts[index.unwrap() + 1 as usize].clone());
                         }
+                    }
+                    input => {
+                        app.user_input.as_mut().unwrap().input(input);
                     }
                 }
             }
+            AppMode::WrapUp => {
+                todo!()
+            }
+
             AppMode::Exit => {
                 return Ok(true);
             }

@@ -1,9 +1,11 @@
 use config::Config;
-use ratatui::widgets::ListState;
+use ratatui::text::Text;
+use ratatui::widgets::{Block, Borders, ListState};
+use ratatui_textarea::TextArea;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use std::fs::File;
 use std::path::Path;
+use std::string;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Settings {
@@ -31,7 +33,7 @@ pub fn load_config() -> Settings {
             prompt: ("What are you consuming lately? Games, movies, music, books... anything!"
                 .to_string()),
         });
-        default_settings.prompts.push(JournalPrompt { name: ("Today's Top Tasks".to_string()), prompt: ("Name 3 tasks that are essential for today.\nIf you did these, you've done the bare minimum for a successful day!".to_string()) });
+        default_settings.prompts.push(JournalPrompt { name: ("Today's Top Tasks".to_string()), prompt: ("Name 3 tasks that are essential for today.\nIf you did these, you've done the bare minimum for a successful day!".to_string())});
 
         let config_json = serde_json::to_string(&default_settings).unwrap();
         std::fs::write(&config_path, config_json).unwrap();
@@ -51,10 +53,15 @@ pub enum PromptStatus {
     Unselected,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct JournalPrompt {
     pub name: String,
     pub prompt: String,
+}
+
+pub struct JournalEntry {
+    pub prompt: JournalPrompt,
+    pub user_entry: String,
 }
 
 #[derive(Clone)]
@@ -77,6 +84,8 @@ pub struct App {
     pub selected_prompts: Vec<JournalPrompt>,
     pub current_prompt: Option<JournalPrompt>,
     pub list_state: ListState,
+    pub user_input: Option<TextArea<'static>>,
+    pub entries: Vec<JournalEntry>,
 }
 
 impl App {
@@ -96,6 +105,8 @@ impl App {
             selected_prompts: Vec::<JournalPrompt>::new(),
             current_prompt: None,
             list_state: ListState::default().with_selected(Some(0)),
+            user_input: None,
+            entries: Vec::<JournalEntry>::new(),
         }
     }
 
@@ -115,5 +126,20 @@ impl App {
                 PromptStatus::Unselected => PromptStatus::Selected,
             };
         }
+    }
+
+    pub fn submit_prompt(&mut self, prompt: &JournalPrompt) {
+        let entry = JournalEntry {
+            prompt: prompt.clone(),
+            user_entry: self.user_input.as_ref().unwrap().lines().join("\n"),
+        };
+        self.entries.push(entry);
+        let mut text_area = TextArea::default();
+        text_area.set_block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Type to enter entry"),
+        );
+        self.user_input = Some(text_area);
     }
 }
