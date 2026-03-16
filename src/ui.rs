@@ -1,7 +1,9 @@
+use std::vec;
+
 use crate::app::*;
 use ratatui::{
     Frame,
-    layout::{Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, Borders, HighlightSpacing, List, ListItem, Paragraph},
@@ -44,6 +46,10 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
         AppMode::Entry => {
             // Configure the middle widget (prompt entry)
             ui_entry(frame, app, &chunks);
+        }
+        AppMode::WrapUp => {
+            // Confiugre middle widget (wrap up)
+            ui_wrapup(frame, app, &chunks);
         }
         _ => {}
     }
@@ -118,7 +124,7 @@ fn ui_selection(
     for item in &app.available_prompts {
         let selected: String = if item.status == PromptStatus::Unselected {
             "[ ] ".to_string()
-                } else {
+        } else {
             "[X] ".to_string()
         };
 
@@ -141,4 +147,35 @@ fn ui_selection(
         .highlight_spacing(HighlightSpacing::Always);
 
     frame.render_stateful_widget(list, chunks[1], &mut app.list_state);
+}
+
+fn ui_wrapup(frame: &mut Frame<'_>, app: &mut App, chunks: &std::rc::Rc<[ratatui::prelude::Rect]>) {
+    let constraint = Constraint::Ratio(1, (app.entries.len() + 2_usize).try_into().unwrap());
+
+    let wrapup_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(vec![constraint; app.entries.len()+1])
+        .split(chunks[1]);
+
+    let wrapup_title = Span::styled(
+        "Here are your final entries:",
+        Style::default().fg(Color::Blue),
+    );
+
+    let mut entry_paragraphs = Vec::new();
+
+    for entry in &app.entries {
+        let text = vec![
+            Line::styled(&entry.prompt.name, Style::default().fg(Color::Blue)),
+            Line::styled(&entry.user_entry, Style::default().fg(Color::LightBlue)),
+        ];
+
+        let paragraph = Paragraph::new(text).alignment(Alignment::Left);
+        entry_paragraphs.push(paragraph);
+    }
+
+    frame.render_widget(wrapup_title, wrapup_chunks[0]);
+    for (i, paragraph  ) in entry_paragraphs.iter().enumerate() {
+        frame.render_widget(paragraph, wrapup_chunks[i+1_usize]);
+    }
 }

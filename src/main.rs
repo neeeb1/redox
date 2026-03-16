@@ -116,7 +116,19 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 }
             },
             AppMode::WrapUp => {
-                todo!()
+                if let Event::Key(key) = event::read()? {
+                    if key.kind == event::KeyEventKind::Release {
+                        // Skip events that are not KeyEventKind::Press
+                        continue;
+                    } else {
+                        match key.code {
+                            KeyCode::Char('q') => {
+                                app.mode = AppMode::Exit;
+                            }
+                            _ => {}
+                        }
+                    }
+                }
             }
 
             AppMode::Exit => {
