@@ -1,12 +1,11 @@
 use crate::app::*;
 use ratatui::{
     Frame,
-    layout::{Constraint, Direction, Layout, VerticalAlignment},
+    layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, Borders, HighlightSpacing, List, ListItem, Paragraph},
 };
-use ratatui_textarea::{Input, TextArea};
 
 const SELECTED_STYLE: Style = Style::new()
     .bg(Color::DarkGray)
@@ -117,12 +116,11 @@ fn ui_selection(
 ) {
     let mut list_items = Vec::<ListItem>::new();
     for item in &app.available_prompts {
-        let selected: String;
-        if item.status == PromptStatus::Unselected {
-            selected = "[ ] ".to_string();
-        } else {
-            selected = "[X] ".to_string()
-        }
+        let selected: String = if item.status == PromptStatus::Unselected {
+            "[ ] ".to_string()
+                } else {
+            "[X] ".to_string()
+        };
 
         list_items.push(ListItem::new(Line::from(Span::styled(
             format!("{} {}", selected, item.prompt.name),

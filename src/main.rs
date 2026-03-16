@@ -50,7 +50,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 
         match app.mode {
             AppMode::Selection => {
-
                 if let Event::Key(key) = event::read()? {
                     if key.kind == event::KeyEventKind::Release {
                         // Skip events that are not KeyEventKind::Press
@@ -74,7 +73,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                             app.selected_prompts.push(prompt.prompt.clone());
                                         }
                                     }
-                                    if app.selected_prompts.len() > 0 {
+                                    if !app.selected_prompts.is_empty() {
                                         app.current_prompt = Some(app.selected_prompts[0].clone());
                                         let mut text_area = TextArea::default();
                                         text_area.set_block(
@@ -94,30 +93,28 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     }
                 }
             }
-            AppMode::Entry => {
-                match crossterm::event::read()?.into() {
-                    Input { key: Key::Esc, .. } => app.mode = AppMode::Exit,
-                    Input {
-                        key: Key::Enter, ..
-                    } => {
-                        let prompt = app.current_prompt.clone().unwrap();
-                        app.submit_prompt(&prompt);
-                        if app.entries.len() == app.selected_prompts.len() {
-                            app.mode = AppMode::WrapUp;
-                        } else {
-                            let index = app
-                                .selected_prompts
-                                .iter()
-                                .position(|p| p == app.current_prompt.as_ref().unwrap());
-                            app.current_prompt =
-                                Some(app.selected_prompts[index.unwrap() + 1 as usize].clone());
-                        }
-                    }
-                    input => {
-                        app.user_input.as_mut().unwrap().input(input);
+            AppMode::Entry => match crossterm::event::read()?.into() {
+                Input { key: Key::Esc, .. } => app.mode = AppMode::Exit,
+                Input {
+                    key: Key::Enter, ..
+                } => {
+                    let prompt = app.current_prompt.clone().unwrap();
+                    app.submit_prompt(&prompt);
+                    if app.entries.len() == app.selected_prompts.len() {
+                        app.mode = AppMode::WrapUp;
+                    } else {
+                        let index = app
+                            .selected_prompts
+                            .iter()
+                            .position(|p| p == app.current_prompt.as_ref().unwrap());
+                        app.current_prompt =
+                            Some(app.selected_prompts[index.unwrap() + 1_usize].clone());
                     }
                 }
-            }
+                input => {
+                    app.user_input.as_mut().unwrap().input(input);
+                }
+            },
             AppMode::WrapUp => {
                 todo!()
             }
@@ -125,7 +122,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             AppMode::Exit => {
                 return Ok(true);
             }
-            _ => {}
         }
     }
 }

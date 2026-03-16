@@ -1,11 +1,9 @@
 use config::Config;
-use ratatui::text::Text;
 use ratatui::widgets::{Block, Borders, ListState};
 use ratatui_textarea::TextArea;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::path::Path;
-use std::string;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Settings {
@@ -93,7 +91,7 @@ impl App {
         let mut selection_prompts: Vec<SelectionItem> = Vec::new();
         for prompt in settings.prompts {
             let item = SelectionItem {
-                prompt: prompt,
+                prompt,
                 status: PromptStatus::Unselected,
             };
             selection_prompts.push(item);
