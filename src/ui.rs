@@ -2,11 +2,12 @@ use std::vec;
 
 use crate::app::*;
 use ratatui::{
+    symbols,
     Frame,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, HighlightSpacing, List, ListItem, Paragraph},
+    widgets::{Block, Borders, HighlightSpacing, LineGauge, List, ListItem, Paragraph},
 };
 
 const SELECTED_STYLE: Style = Style::new()
@@ -103,16 +104,28 @@ fn ui_entry(frame: &mut Frame<'_>, app: &mut App, chunks: &std::rc::Rc<[ratatui:
         .constraints([
             Constraint::Percentage(15),
             Constraint::Percentage(15),
-            Constraint::Percentage(70),
+            Constraint::Percentage(65),
+            Constraint::Percentage(5)
         ])
         .split(chunks[1]);
 
     let prompt_title = Span::styled(current_prompt.name, Style::default().fg(Color::Blue));
     let prompt_text = Span::styled(current_prompt.prompt, Style::default().fg(Color::LightBlue));
 
+    let index = app
+        .selected_prompts
+        .iter()
+        .position(|p| p == app.current_prompt.as_ref().unwrap());
+    let progress_bar = LineGauge::default()
+            .block(Block::bordered().title(format!("Entry {} / {}", index.unwrap(), app.selected_prompts.len())))
+            .filled_style(Style::new().white().on_black().bold())
+            .filled_symbol(symbols::line::THICK_HORIZONTAL)
+            .ratio(index.unwrap() as f64 / (app.selected_prompts.len() as f64 + 1.0));
+
     frame.render_widget(prompt_title, entry_chunks[0]);
     frame.render_widget(prompt_text, entry_chunks[1]);
     frame.render_widget(app.user_input.as_ref().unwrap(), entry_chunks[2]);
+    frame.render_widget(progress_bar, entry_chunks[3]);
 }
 
 fn ui_selection(
