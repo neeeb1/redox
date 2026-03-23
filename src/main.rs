@@ -1,4 +1,5 @@
 mod app;
+mod render;
 mod ui;
 
 use crossterm::event;
@@ -13,6 +14,7 @@ use ratatui::{Terminal, prelude::Backend};
 use ratatui_textarea::{Input, Key, TextArea};
 
 use crate::app::*;
+use crate::render::write_file;
 use crate::ui::*;
 use core::panic;
 use std::io;
@@ -124,6 +126,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         match key.code {
                             KeyCode::Char('q') => {
                                 app.mode = AppMode::Exit;
+                            }
+                            KeyCode::Enter => {
+                                write_file(app.render_template()).unwrap();
                             }
                             _ => {}
                         }

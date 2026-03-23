@@ -2,10 +2,10 @@ use std::vec;
 
 use crate::app::*;
 use ratatui::{
-    symbols,
     Frame,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
+    symbols,
     text::{Line, Span, Text},
     widgets::{Block, Borders, HighlightSpacing, LineGauge, List, ListItem, Paragraph},
 };
@@ -105,7 +105,7 @@ fn ui_entry(frame: &mut Frame<'_>, app: &mut App, chunks: &std::rc::Rc<[ratatui:
             Constraint::Percentage(15),
             Constraint::Percentage(15),
             Constraint::Percentage(65),
-            Constraint::Percentage(5)
+            Constraint::Percentage(5),
         ])
         .split(chunks[1]);
 
@@ -117,10 +117,14 @@ fn ui_entry(frame: &mut Frame<'_>, app: &mut App, chunks: &std::rc::Rc<[ratatui:
         .iter()
         .position(|p| p == app.current_prompt.as_ref().unwrap());
     let progress_bar = LineGauge::default()
-            .block(Block::bordered().title(format!("Entry {} / {}", index.unwrap(), app.selected_prompts.len())))
-            .filled_style(Style::new().white().on_black().bold())
-            .filled_symbol(symbols::line::THICK_HORIZONTAL)
-            .ratio(index.unwrap() as f64 / (app.selected_prompts.len() as f64 + 1.0));
+        .block(Block::bordered().title(format!(
+            "Entry {} / {}",
+            index.unwrap(),
+            app.selected_prompts.len()
+        )))
+        .filled_style(Style::new().white().on_black().bold())
+        .filled_symbol(symbols::line::THICK_HORIZONTAL)
+        .ratio(index.unwrap() as f64 / (app.selected_prompts.len() as f64 + 1.0));
 
     frame.render_widget(prompt_title, entry_chunks[0]);
     frame.render_widget(prompt_text, entry_chunks[1]);
@@ -167,12 +171,12 @@ fn ui_wrapup(frame: &mut Frame<'_>, app: &mut App, chunks: &std::rc::Rc<[ratatui
 
     let wrapup_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(vec![constraint; app.entries.len()+1])
+        .constraints(vec![constraint; app.entries.len() + 1])
         .split(chunks[1]);
 
     let wrapup_title = Span::styled(
         "Here are your final entries:",
-        Style::default().fg(Color::Blue),
+        Style::default().fg(Color::Yellow),
     );
 
     let mut entry_paragraphs = Vec::new();
@@ -188,7 +192,7 @@ fn ui_wrapup(frame: &mut Frame<'_>, app: &mut App, chunks: &std::rc::Rc<[ratatui
     }
 
     frame.render_widget(wrapup_title, wrapup_chunks[0]);
-    for (i, paragraph  ) in entry_paragraphs.iter().enumerate() {
-        frame.render_widget(paragraph, wrapup_chunks[i+1_usize]);
+    for (i, paragraph) in entry_paragraphs.iter().enumerate() {
+        frame.render_widget(paragraph, wrapup_chunks[i + 1_usize]);
     }
 }

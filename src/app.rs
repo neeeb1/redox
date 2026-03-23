@@ -57,6 +57,7 @@ pub struct JournalPrompt {
     pub prompt: String,
 }
 
+#[derive(Serialize)]
 pub struct JournalEntry {
     pub prompt: JournalPrompt,
     pub user_entry: String,
